@@ -170,22 +170,6 @@ These results are reported to support transparent assessment rather than to clai
 
 The repository is intended to organise the research materials as follows. Update this structure to match the files actually released.
 
-```text
-project/
-├── README.md
-├── requirements.txt
-├── notebooks/
-│   └── model_training_and_evaluation.ipynb
-├── src/
-│   ├── data_preprocessing/
-│   ├── model/
-│   ├── training/
-│   └── evaluation/
-├── configs/
-├── results/
-├── figures/
-└── LICENSE
-```
 
 ## Reproducibility and Data Availability
 

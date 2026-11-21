@@ -1,55 +1,57 @@
-## Results
+# Results summary
 
-# README — ready-to-copy replacements
+Caption-assisted multi-label classification of radiological imaging characteristics on ROCOv2 (18 UMLS CUI labels: imaging modality, anatomical region, radiographic projection, acquisition plane). These are summary values taken from the revised manuscript. The manuscript is the authoritative source; see it for definitions, confidence intervals and caveats. The labels describe imaging characteristics, not diagnoses, so the results do not measure diagnostic accuracy.
 
-Apply to `README.md` in https://github.com/HiraNawaz2415/MS-Thesis-Paper. Sections are named as they appear in the current README. Wording uses only facts verified in the project files and the ROCOv2 paper. Delete any line that refers to a file you do not upload.
+Large output files (model checkpoints, per-sample prediction files) are not stored in this repository. ROCOv2 images, captions and `license_information.csv` are not redistributed; obtain them from the official ROCOv2 release (Zenodo DOI 10.5281/zenodo.10821435, as cited in the ROCOv2 paper) and follow its licence terms.
 
----
-## Replace the whole "Dataset" subsection text about labels (keep the sample-count table)
+## Data partitions
 
-The 18 labels are the UMLS CUIs of the manually curated ROCOv2 concept vocabulary (6 imaging modalities, 8 anatomical regions, 2 radiographic projections, 2 acquisition planes). The original reason for adopting this vocabulary is not documented in the project files. Targets were built from the combined ROCOv2 concept files (`train_concepts.csv`, `valid_concepts.csv`, `test_concepts.csv`), which contain manually created and automatically extracted concepts; some positives, mainly for anatomical regions, therefore come from automatically extracted, caption-derived concepts. Records with none of the 18 CUIs (292 Train, 84 Validation, 57 Test) and one Validation record with an empty caption were excluded, leaving 59,666 / 9,819 / 9,870 images. The Test set was split in half with seed 42 into a Calibration set (4,935) and a Test-final set (4,935).
+| Partition | Images | Use |
+|---|---|---|
+| Train | 59,666 | model training |
+| Validation | 9,819 | model development and checkpoint selection |
+| Calibration | 4,935 | conformal thresholds (random half of the official Test set, seed 42) |
+| Test-final | 4,935 | final evaluation (other random half of the official Test set) |
 
-## Replace "Repository Structure"
+Excluded before this split: 292 Train, 84 Validation and 57 Test records with none of the 18 CUIs, and one Validation record with an empty caption. Labels are built from the combined ROCOv2 concept files (manual and automatic concepts), so some positives, mainly for anatomical regions, are caption-derived.
 
-```
-Notebooks/            Notebooks 01-14 and the multi-seed aggregation (Colab)
-Results/              Results.md and a Google Drive link file
-split_ids/            image IDs of Train, Validation, Calibration and Test-final (one ID per line)   [only if uploaded]
-config/               label_mapping.json, dataset_config.json                                          [only if uploaded]
-scripts/              article_overlap_analysis.py                                                      [only if uploaded]
-README.md
-```
+## Predictive performance (Test-final, threshold 0.5)
 
-## Replace "Limitations" bullet on identifiers
+| Model | Macro-F1 | Notes |
+|---|---|---|
+| Proposed multimodal VLM (image + caption) | 0.8311 | Micro-F1 0.9285, Hamming loss 0.0126, subset accuracy 0.8634, macro ROC-AUC 0.9954 (stored predictions of the original run) |
+| Same model, float32 recomputation | 0.8308 | differs from the stored predictions in 2 of 88,830 label decisions |
+| Multi-seed mean (VLM) | 0.8370 ± 0.0052 | Micro-F1 0.9307 ± 0.0020 |
+| Multi-seed mean (DenseNet121, image only) | 0.7212 ± 0.0047 | Micro-F1 0.8611 ± 0.0057 |
+| Caption-only TF-IDF + logistic regression | 0.7075 | trained on Train only |
+| Caption-only frozen BiomedCLIP text encoder | 0.6416 | trained on Train only |
 
-ROCOv2 provides no patient or study identifiers, so patient-level independence of the partitions cannot be assessed. ROCOv2's `license_information.csv` gives the PubMed Central article ID of each image: no article is shared between Train and the other partitions, but 62.9% of Test-final images (3,102 of 4,935) come from articles that also contribute Validation images, and 22.7% (1,122) from articles that also contribute Calibration images. Test-final is therefore not independent of the Validation and Calibration partitions at article level.
+Caption masking (trained VLM, inference only): intact caption 0.8308; strict label terms deleted 0.7639; empty caption 0.6983. The losses are concentrated in anatomical labels (Pelvis, Abdomen, Chest). The reported performance is therefore that of a caption-assisted setting.
 
-## Replace the "Reproducibility and Data Availability" text
+## Conformal prediction (Test-final, nominal coverage 90%, full-precision thresholds)
 
-This repository contains the notebooks and result summaries of the study [and the image identifiers of each partition, the label mapping, the dataset configuration and the script for the article-overlap analysis]. It does not redistribute ROCOv2 images, captions or `license_information.csv`; obtain them from the official ROCOv2 release (Zenodo DOI 10.5281/zenodo.10821435, as cited in the ROCOv2 paper) and follow its licensing terms. Repository URL: https://github.com/HiraNawaz2415/MS-Thesis-Paper
+| Quantity | Value |
+|---|---|
+| Mean per-label marginal coverage | 0.9026 (95% CI 0.8990–0.9061) |
+| Positive-class coverage | 0.7224 |
+| Negative-class coverage | 0.9199 |
+| All 18 labels covered for an image | 0.4101 |
+| Empty prediction sets | 9.58% |
+| Mean set size | 0.9042 |
 
-To rerun the article-overlap analysis, place `license_information.csv`, the prepared CSV files of Notebook 02, `test_final_logits_fp32.csv` and `qhat_fp32.json` in one folder and run:
+This is empirical coverage on one random split, not a certified guarantee for new articles or deployment. The earlier float16-based coverage value (0.9106) is superseded.
 
-```
-python scripts/article_overlap_analysis.py --data-dir <folder> --logits <folder>/test_final_logits_fp32.csv --qhat <folder>/qhat_fp32.json
-```
+## Composite Trust Score (500 Test-final images, 9,000 label predictions, 101 errors)
 
-## Replace the Trust Score sentence in "Experimental Results"
+| Signal | Error-detection AUROC |
+|---|---|
+| Raw model confidence | 0.9744 |
+| Counterfactual component only | 0.9671 |
+| Composite Trust Score (0.5 / 0.5) | 0.9670 |
+| Conformal component only | 0.9053 |
 
-The Composite Trust Score did not improve error detection over raw model confidence (AUROC 0.9670 vs 0.9744, full-precision conformal thresholds; the earlier float16 value of 0.9545 is superseded). Conformal marginal coverage at nominal 90% was 0.9026 (the earlier float16 value of 0.9106 is superseded), with positive-class coverage 0.7224.
+The composite score did not improve on raw confidence. The min–max normalisation is taken over this sample, so the score is used only to rank predictions within it; no calibration-fixed normalisation was implemented. The earlier float16-based value (0.9545) is superseded.
 
-## Delete
+## Partition overlap
 
-- "Repository URL: To be added."
-- "The repository contents and availability will be updated by the authors."
-- The Python snippet at the end of the README (a pandoc call writing `/mnt/data/README.md`).
-- `Results/Result_link_of_Google_Drive.txt` if the Drive link is not meant to be public (the reviewer could not open it).
-
-## Not included on purpose
-
-No licence text. A licence needs the authors' and institution's decision.
-
-The complete experimental results, graphs, and evaluation
-tables are available below:
-
-[📊 View Complete Results on Google (https://drive.google.com/drive/folders/1EwAkVvA5bbOpY8oE6eOqxTRNSXZGUaxK
+Using the article IDs in ROCOv2's `license_information.csv`: no article occurs in Train and any other partition; 4,477 of 44,766 distinct articles occur in more than one partition (Validation–Calibration 2,646, Validation–Test-final 2,554, Calibration–Test-final 917). 3,102 of 4,935 Test-final images (62.9%) come from articles that also contribute Validation images, and 1,122 (22.7%) from articles that also contribute Calibration images. On Test-final images whose article has no Validation image (1,833), Micro-F1 is 0.9326 and Macro-F1 0.8215. Patient-level independence is not established. The analysis is reproduced by `scripts/article_overlap_analysis.py`.

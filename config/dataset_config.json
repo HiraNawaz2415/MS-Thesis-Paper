@@ -1,0 +1,37 @@
+{
+  "dataset": "ROCOv2",
+  "notebook": "02_ROCOv2_Dataset_Preparation",
+  "random_seed": 42,
+  "split_protocol": {
+    "Train": "training",
+    "Validation": "validation/calibration-development",
+    "Test": "untouched final evaluation"
+  },
+  "label_count": 18,
+  "label_columns": [
+    "label_C0000726",
+    "label_C0002978",
+    "label_C0006141",
+    "label_C0023216",
+    "label_C0024485",
+    "label_C0030797",
+    "label_C0032743",
+    "label_C0037303",
+    "label_C0037949",
+    "label_C0040405",
+    "label_C0041618",
+    "label_C0205106",
+    "label_C0205129",
+    "label_C0817096",
+    "label_C1140618",
+    "label_C1306645",
+    "label_C1996865",
+    "label_C1999039"
+  ],
+  "label_mapping_file": "label_mapping.json",
+  "image_storage": "Original ROCOv2 ZIP archives",
+  "image_copy_performed": false,
+  "later_notebook_image_access": "Read directly from original ZIP files",
+  "test_usage": "Untouched final evaluation; never used for training/model selection/tuning",
+  "rare_label_threshold": 10
+}

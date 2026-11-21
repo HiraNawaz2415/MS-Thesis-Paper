@@ -4,6 +4,9 @@ Caption-assisted multi-label classification of radiological imaging characterist
 
 Large output files (model checkpoints, per-sample prediction files) are not stored in this repository. ROCOv2 images, captions and `license_information.csv` are not redistributed; obtain them from the official ROCOv2 release (Zenodo DOI 10.5281/zenodo.10821435, as cited in the ROCOv2 paper) and follow its licence terms.
 
+## Detailed Results Files
+[View Results](https://drive.google.com/drive/folders/1EwAkVvA5bbOpY8oE6eOqxTRNSXZGUaxK?usp=sharing)
+
 ## Data partitions
 
 | Partition | Images | Use |
